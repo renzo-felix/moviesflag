@@ -47,7 +47,7 @@ class MovieWithFlagAppTestCase(unittest.TestCase):
         # The response should be JSON and contain data
         data = response.get_json()
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data), 1)##falla
         for movie in data:
             self.assertEqual(movie["title"], "Superman II")
             self.assertEqual(movie["year"], "1980")

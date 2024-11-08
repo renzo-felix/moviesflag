@@ -2,11 +2,11 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import json
 
-app = Flask(__name__)
-apikey = "<apikey>"
 
-def searchfilms(search_text):
-    url = "https://www.omdbapi.com/?s=" + search_text + "&apikey=" + apikey
+app = Flask(__name__)
+apikey = "5f9a3694"
+def searchfilms(search_text , page=1):
+    url = "https://www.omdbapi.com/?s=" + search_text +"&page=" +str( page)+ "&apikey=" + apikey ##todos los urls tienn eso?
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -34,13 +34,19 @@ def get_country_flag(fullname):
     print(f"Failed to retrieve flag for country code: {fullname}")
     return None
 
-def merge_data_with_flags(filter):
-    filmssearch = searchfilms(filter)
+def merge_data_with_flags(filter,page=1):
+
+    filmssearch = searchfilms(filter,page)
+    if filmssearch == None:
+        return [],0
     moviesdetailswithflags = []
+    total=int(filmssearch.get("totalResults", 0))
+    print(filmssearch["Search"])
     for movie in filmssearch["Search"]:
          moviedetails = getmoviedetails(movie)
          countriesNames = moviedetails["Country"].split(",")
          countries = []
+         print(countriesNames)
          for country in countriesNames:
             countrywithflag = {
                 "name": country.strip(),
@@ -54,12 +60,15 @@ def merge_data_with_flags(filter):
          }
          moviesdetailswithflags.append(moviewithflags)
 
-    return moviesdetailswithflags
+    return moviesdetailswithflags,total
 
 @app.route("/")
 def index():
     filter = request.args.get("filter", "").upper()
-    return render_template("index.html", movies = merge_data_with_flags(filter))
+    page = int(request.args.get("page", 1))
+    moviess, total= merge_data_with_flags(filter)
+    total_pages = (total + 9) // 10
+    return render_template("index.html", movies=moviess, filter=filter, current_page=page, total_pages=total_pages)
 
 @app.route("/api/movies")
 def api_movies():
